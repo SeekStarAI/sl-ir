@@ -196,10 +196,15 @@ impl Program {
                 actual: node.outputs.len(),
             });
         }
-        for (port_index, (port, id)) in signature.inputs.iter().zip(node.inputs.iter()).enumerate() {
+        for (port_index, (port, id)) in signature.inputs.iter().zip(node.inputs.iter()).enumerate()
+        {
             self.check_port(index, port_index, port, *id)?;
         }
-        for (port_index, (port, id)) in signature.outputs.iter().zip(node.outputs.iter()).enumerate()
+        for (port_index, (port, id)) in signature
+            .outputs
+            .iter()
+            .zip(node.outputs.iter())
+            .enumerate()
         {
             self.check_port(index, port_index, port, *id)?;
         }

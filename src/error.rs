@@ -49,7 +49,11 @@ pub enum IrError {
     /// The same symbolic dimension is declared twice.
     DuplicateSymbolicDim(SymId),
     /// The requested extent exceeds the declared bound.
-    SymbolicDimExceedsMax { dim: SymId, max: u32, requested: u32 },
+    SymbolicDimExceedsMax {
+        dim: SymId,
+        max: u32,
+        requested: u32,
+    },
     /// A command buffer contains a symbolic dimension.
     SymbolicDimInCommandBuffer(ValueId),
     /// A value has the wrong role for its position.
@@ -73,7 +77,11 @@ pub enum IrError {
     /// Scratchpad space or a slot range overflows.
     PlanOverflow { required: u64, limit: u64 },
     /// A value does not fit in the backend's per-value limit.
-    ValueTooLarge { value: ValueId, bytes: u64, limit: u64 },
+    ValueTooLarge {
+        value: ValueId,
+        bytes: u64,
+        limit: u64,
+    },
     /// The backend does not implement an operator.
     UnsupportedOperator(OpCode),
     /// The command buffer was produced by a different IR version.
@@ -152,7 +160,11 @@ impl fmt::Display for IrError {
                 value.0
             ),
             Self::InvalidInputOutput { value } => {
-                write!(formatter, "value {} has an invalid input/output role", value.0)
+                write!(
+                    formatter,
+                    "value {} has an invalid input/output role",
+                    value.0
+                )
             }
             Self::StateNotDeclared(value) => {
                 write!(formatter, "state {} has no declaration", value.0)
@@ -174,7 +186,10 @@ impl fmt::Display for IrError {
                 write!(formatter, "memory plan invariant violated: {message}")
             }
             Self::PlanOverflow { required, limit } => {
-                write!(formatter, "plan needs {required} bytes but the limit is {limit}")
+                write!(
+                    formatter,
+                    "plan needs {required} bytes but the limit is {limit}"
+                )
             }
             Self::ValueTooLarge {
                 value,

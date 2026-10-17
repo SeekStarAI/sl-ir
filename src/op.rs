@@ -135,6 +135,8 @@ pub enum Op {
     MergeHeads { heads: u32, head_dim: u32 },
     /// Fused causal attention.
     CausalAttention {
+        /// Transformer layer whose KV cache slice is read and written.
+        layer: u32,
         heads: u32,
         kv_heads: u32,
         head_dim: u32,
@@ -174,7 +176,7 @@ impl Op {
     /// Returns the layer index for stateful operators.
     pub const fn layer(&self) -> Option<u32> {
         match self {
-            Self::KvAppend { layer } => Some(*layer),
+            Self::KvAppend { layer } | Self::CausalAttention { layer, .. } => Some(*layer),
             _ => None,
         }
     }
@@ -404,6 +406,17 @@ mod tests {
         let op = Op::RmsNorm { eps: 1e-5 };
         assert_eq!(op.code(), OpCode::RmsNorm);
         assert_eq!(Op::KvAppend { layer: 3 }.layer(), Some(3));
+        assert_eq!(
+            Op::CausalAttention {
+                layer: 2,
+                heads: 4,
+                kv_heads: 2,
+                head_dim: 8,
+                scale: 0.35,
+            }
+            .layer(),
+            Some(2)
+        );
         assert_eq!(Op::Silu.layer(), None);
         assert_eq!(
             Op::Rope {

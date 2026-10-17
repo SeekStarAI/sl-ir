@@ -70,7 +70,9 @@ impl Shape {
     /// Fails for symbolic shapes; resolve them with [`ShapeSpec`] first.
     pub fn element_count(&self) -> Result<u64, IrError> {
         self.0.iter().try_fold(1u64, |count, dim| match dim {
-            Dim::Const(value) => count.checked_mul(u64::from(*value)).ok_or(IrError::ShapeOverflow),
+            Dim::Const(value) => count
+                .checked_mul(u64::from(*value))
+                .ok_or(IrError::ShapeOverflow),
             Dim::Sym(id) => Err(IrError::UnresolvedSymbolicDim(*id)),
         })
     }

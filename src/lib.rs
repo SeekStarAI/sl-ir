@@ -34,9 +34,7 @@ pub const IR_VERSION: u32 = 1;
 
 pub use binding::{BufferId, ParamBinding, PipelineId, QueueId, StepBinding};
 pub use caps::{BackendTag, DeviceCapabilities};
-pub use command::{
-    Command, CommandBuffer, CommandId, Effect, Node, Program, StateDecl, StateKind,
-};
+pub use command::{Command, CommandBuffer, CommandId, Effect, Node, Program, StateDecl, StateKind};
 pub use dtype::{DType, DTypeSet};
 pub use error::IrError;
 pub use op::{Op, OpCode, OpSet, PortSpec, RopeVariant, Signature};
@@ -77,7 +75,10 @@ mod tests {
             value: 128,
         }]);
 
-        assert_eq!(spec.resolve(&shape).unwrap().to_consts().unwrap(), vec![1, 128]);
+        assert_eq!(
+            spec.resolve(&shape).unwrap().to_consts().unwrap(),
+            vec![1, 128]
+        );
         assert_eq!(
             shape.element_count().err(),
             Some(IrError::UnresolvedSymbolicDim(seq))
@@ -113,7 +114,10 @@ mod tests {
             outputs: Vec::new(),
             states: Vec::new(),
         };
-        assert_eq!(program.validate().err(), Some(IrError::InvalidEffect { node: 0 }));
+        assert_eq!(
+            program.validate().err(),
+            Some(IrError::InvalidEffect { node: 0 })
+        );
 
         program.values[0] = f32_value(&[1, 2], ValueRole::State);
         program.inputs.clear();

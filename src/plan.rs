@@ -218,9 +218,7 @@ mod tests {
         let values = vec![temp()];
         let commands = vec![command(vec![], vec![ValueId(0)], vec![])];
         assert_eq!(
-            MemoryPlan::default()
-                .validate(&values, &commands, 16)
-                .err(),
+            MemoryPlan::default().validate(&values, &commands, 16).err(),
             Some(IrError::PlanInvariant(
                 "Temp value is missing from the memory plan"
             ))
