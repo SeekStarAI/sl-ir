@@ -16,6 +16,7 @@
 extern crate alloc;
 
 pub mod binding;
+pub mod builder;
 pub mod caps;
 pub mod command;
 pub mod dtype;
@@ -30,9 +31,10 @@ pub mod value;
 /// Bumped on any change to operator semantics, command layout, memory-plan
 /// invariants or binding structures. Backends must declare the version they
 /// were built against.
-pub const IR_VERSION: u32 = 1;
+pub const IR_VERSION: u32 = 2;
 
 pub use binding::{BufferId, ParamBinding, PipelineId, QueueId, StepBinding};
+pub use builder::ProgramBuilder;
 pub use caps::{BackendTag, DeviceCapabilities};
 pub use command::{Command, CommandBuffer, CommandId, Effect, Node, Program, StateDecl, StateKind};
 pub use dtype::{DType, DTypeSet};
@@ -40,7 +42,7 @@ pub use error::IrError;
 pub use op::{Op, OpCode, OpSet, PortSpec, RopeVariant, Signature};
 pub use plan::{MemoryPlan, Slot};
 pub use shape::{Dim, Shape, ShapeConstraints, ShapeSpec, ShapeSpecEntry, SymDimDecl, SymId};
-pub use value::{Value, ValueId, ValueRole, ValueRoleSet};
+pub use value::{QuantizationFormat, TensorEncoding, Value, ValueId, ValueRole, ValueRoleSet};
 
 #[cfg(test)]
 mod tests {

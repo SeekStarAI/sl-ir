@@ -50,6 +50,16 @@ impl Shape {
         Self(dims.iter().copied().map(Dim::Const).collect())
     }
 
+    /// Creates a concrete shape from `usize` dimensions, rejecting overflow.
+    pub fn from_usize(dims: &[usize]) -> Result<Self, IrError> {
+        let mut shape = Vec::with_capacity(dims.len());
+        for &dim in dims {
+            let extent = u32::try_from(dim).map_err(|_| IrError::DimensionTooLarge(dim))?;
+            shape.push(Dim::Const(extent));
+        }
+        Ok(Self(shape))
+    }
+
     /// Returns the dimensions.
     pub fn as_slice(&self) -> &[Dim] {
         &self.0

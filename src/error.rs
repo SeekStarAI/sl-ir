@@ -42,6 +42,16 @@ pub enum IrError {
     SymbolicNotAllowed { node: usize },
     /// Element count or byte size overflows `u64`.
     ShapeOverflow,
+    /// A dimension does not fit in `u32`.
+    DimensionTooLarge(usize),
+    /// A quantization group size is zero.
+    InvalidGroupSize,
+    /// An opaque encoding has no known storage size.
+    OpaqueEncodingSize,
+    /// A non-parameter value uses a non-dense storage encoding.
+    NonDenseValue { value: ValueId, role: ValueRole },
+    /// A state value's shape does not match its `StateKind`.
+    InvalidStateShape { value: ValueId },
     /// A symbolic dimension survives into a context that requires concrete shapes.
     UnresolvedSymbolicDim(SymId),
     /// A value uses a symbolic dimension that was never declared.
@@ -127,6 +137,25 @@ impl fmt::Display for IrError {
                 write!(formatter, "node {node} does not accept symbolic dimensions")
             }
             Self::ShapeOverflow => formatter.write_str("shape element count overflows u64"),
+            Self::DimensionTooLarge(value) => {
+                write!(formatter, "dimension {value} does not fit in u32")
+            }
+            Self::InvalidGroupSize => {
+                formatter.write_str("quantization group size must be greater than zero")
+            }
+            Self::OpaqueEncodingSize => {
+                formatter.write_str("opaque quantization has no known storage size")
+            }
+            Self::NonDenseValue { value, role } => write!(
+                formatter,
+                "value {} has role {role} but a non-dense storage encoding",
+                value.0
+            ),
+            Self::InvalidStateShape { value } => write!(
+                formatter,
+                "state value {} does not match its StateKind shape",
+                value.0
+            ),
             Self::UnresolvedSymbolicDim(dim) => {
                 write!(formatter, "symbolic dimension {} is not resolved", dim.0)
             }

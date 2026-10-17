@@ -7,7 +7,7 @@ use crate::dtype::DType;
 use crate::error::IrError;
 use crate::op::{Op, PortSpec};
 use crate::plan::MemoryPlan;
-use crate::shape::{Dim, SymDimDecl};
+use crate::shape::{Dim, Shape, SymDimDecl};
 use crate::value::{Value, ValueId, ValueRole};
 use alloc::vec::Vec;
 
@@ -107,6 +107,15 @@ impl Program {
             }
         }
 
+        for (index, value) in self.values.iter().enumerate() {
+            if value.role != ValueRole::Param && !value.is_dense() {
+                return Err(IrError::NonDenseValue {
+                    value: ValueId(index as u32),
+                    role: value.role,
+                });
+            }
+        }
+
         for id in &self.inputs {
             let value = self.value(*id)?;
             if value.role != ValueRole::Input {
@@ -163,6 +172,26 @@ impl Program {
                 .any(|other| other.value == state.value)
             {
                 return Err(IrError::DuplicateState(state.value));
+            }
+            self.check_symbols(value)?;
+            let StateKind::KvCache {
+                batch,
+                layers,
+                kv_heads,
+                head_dim,
+                max_seq,
+                ..
+            } = state.kind;
+            let expected = Shape::new(vec![
+                Dim::Const(batch),
+                Dim::Const(layers),
+                Dim::Const(2),
+                max_seq,
+                Dim::Const(kv_heads),
+                Dim::Const(head_dim),
+            ]);
+            if value.shape != expected {
+                return Err(IrError::InvalidStateShape { value: state.value });
             }
         }
 
@@ -304,6 +333,12 @@ impl CommandBuffer {
             if value.shape.has_symbolic() {
                 return Err(IrError::SymbolicDimInCommandBuffer(ValueId(index as u32)));
             }
+            if value.role != ValueRole::Param && !value.is_dense() {
+                return Err(IrError::NonDenseValue {
+                    value: ValueId(index as u32),
+                    role: value.role,
+                });
+            }
         }
 
         for (index, state) in self.states.iter().enumerate() {
@@ -315,9 +350,27 @@ impl CommandBuffer {
                     actual: value.role,
                 });
             }
-            let StateKind::KvCache { max_seq, .. } = state.kind;
+            let StateKind::KvCache {
+                batch,
+                layers,
+                kv_heads,
+                head_dim,
+                max_seq,
+                ..
+            } = state.kind;
             if max_seq.is_symbolic() {
                 return Err(IrError::SymbolicDimInCommandBuffer(state.value));
+            }
+            let expected = Shape::new(vec![
+                Dim::Const(batch),
+                Dim::Const(layers),
+                Dim::Const(2),
+                max_seq,
+                Dim::Const(kv_heads),
+                Dim::Const(head_dim),
+            ]);
+            if value.shape != expected {
+                return Err(IrError::InvalidStateShape { value: state.value });
             }
             if self.states[..index]
                 .iter()

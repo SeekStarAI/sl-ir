@@ -54,6 +54,10 @@ any backend or any third-party crate.
 - Every node satisfies its operator signature: port count, dtype set, role set and rank
   range are checked against `OpCode::signature()`.
 - Every symbolic dimension used by a value is declared in `Program::sym_dims`.
+- Only `Param` values may use a non-dense `TensorEncoding`; inputs, outputs, scalars,
+  states and temporaries must be `Dense`.
+- A state value's shape equals `[batch, layers, 2, max_seq, kv_heads, head_dim]`
+  implied by its `StateKind`; symbolic dimensions are compared structurally.
 - State effects target values with role `State` and an entry in `Program::states`.
 - `CommandBuffer` contains no symbolic dimensions, including KV `max_seq`.
 - Command dependencies always reference earlier commands.
@@ -68,13 +72,13 @@ Run from the StarLight workspace root:
 ```sh
 cargo test -p sl-ir
 cargo clippy -p sl-ir --all-targets -- -D warnings
-cargo test -p sl-ir --no-default-features
+cargo check -p sl-ir --no-default-features
 ```
 
 ## Change Process
 
-Any change to `OpCode` variants, `Signature`, `MemoryPlan` invariants or binding
-structures changes the ABI. Such a change requires:
+Any change to `OpCode` variants, `Signature`, `MemoryPlan` invariants, `DType`,
+`TensorEncoding`, `Value` fields or binding structures changes the ABI. Such a change requires:
 
 1. an update to `IR_VERSION`;
 2. a matching update to ARCH-0004 in the StarLight workspace;
