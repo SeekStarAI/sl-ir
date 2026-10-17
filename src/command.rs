@@ -5,7 +5,7 @@
 
 use crate::dtype::DType;
 use crate::error::IrError;
-use crate::op::Op;
+use crate::op::{Op, PortSpec};
 use crate::plan::MemoryPlan;
 use crate::shape::{Dim, SymDimDecl};
 use crate::value::{Value, ValueId, ValueRole};
@@ -146,6 +146,7 @@ impl Program {
                     }
                 }
             }
+            self.check_signature(index, node)?;
         }
 
         for (index, state) in self.states.iter().enumerate() {
@@ -175,6 +176,69 @@ impl Program {
                     return Err(IrError::UndeclaredSymbolicDim(*sym));
                 }
             }
+        }
+        Ok(())
+    }
+
+    fn check_signature(&self, index: usize, node: &Node) -> Result<(), IrError> {
+        let signature = node.op.code().signature();
+        if node.inputs.len() != signature.inputs.len() {
+            return Err(IrError::ArityMismatch {
+                node: index,
+                expected: signature.inputs.len(),
+                actual: node.inputs.len(),
+            });
+        }
+        if node.outputs.len() != signature.outputs.len() {
+            return Err(IrError::ArityMismatch {
+                node: index,
+                expected: signature.outputs.len(),
+                actual: node.outputs.len(),
+            });
+        }
+        for (port_index, (port, id)) in signature.inputs.iter().zip(node.inputs.iter()).enumerate() {
+            self.check_port(index, port_index, port, *id)?;
+        }
+        for (port_index, (port, id)) in signature.outputs.iter().zip(node.outputs.iter()).enumerate()
+        {
+            self.check_port(index, port_index, port, *id)?;
+        }
+        Ok(())
+    }
+
+    fn check_port(
+        &self,
+        node: usize,
+        port_index: usize,
+        port: &PortSpec,
+        id: ValueId,
+    ) -> Result<(), IrError> {
+        let value = self.value(id)?;
+        if !port.dtypes.contains(value.dtype) {
+            return Err(IrError::DTypeNotAllowed {
+                node,
+                dtype: value.dtype,
+            });
+        }
+        if !port.roles.contains(value.role) {
+            return Err(IrError::RoleNotAllowed {
+                node,
+                value: id,
+                role: value.role,
+            });
+        }
+        let rank = value.shape.rank();
+        if rank < port.min_rank as usize || rank > port.max_rank as usize {
+            return Err(IrError::RankMismatch {
+                node,
+                port: port_index,
+                rank,
+                min: port.min_rank,
+                max: port.max_rank,
+            });
+        }
+        if !port.allow_symbolic && value.shape.has_symbolic() {
+            return Err(IrError::SymbolicNotAllowed { node });
         }
         Ok(())
     }

@@ -3,6 +3,7 @@
 
 //! Error types for IR construction and validation.
 
+use crate::dtype::DType;
 use crate::op::OpCode;
 use crate::shape::SymId;
 use crate::value::{ValueId, ValueRole};
@@ -15,6 +16,30 @@ pub enum IrError {
     UnknownValue(ValueId),
     /// A value id was inserted twice.
     DuplicateValue(ValueId),
+    /// A node has the wrong number of inputs or outputs.
+    ArityMismatch {
+        node: usize,
+        expected: usize,
+        actual: usize,
+    },
+    /// A port value has a rank outside the accepted range.
+    RankMismatch {
+        node: usize,
+        port: usize,
+        rank: usize,
+        min: u8,
+        max: u8,
+    },
+    /// A port does not accept the value's dtype.
+    DTypeNotAllowed { node: usize, dtype: DType },
+    /// A port does not accept the value's role.
+    RoleNotAllowed {
+        node: usize,
+        value: ValueId,
+        role: ValueRole,
+    },
+    /// A port does not accept symbolic dimensions.
+    SymbolicNotAllowed { node: usize },
     /// Element count or byte size overflows `u64`.
     ShapeOverflow,
     /// A symbolic dimension survives into a context that requires concrete shapes.
@@ -64,6 +89,35 @@ impl fmt::Display for IrError {
         match self {
             Self::UnknownValue(value) => write!(formatter, "unknown value id {}", value.0),
             Self::DuplicateValue(value) => write!(formatter, "duplicate value id {}", value.0),
+            Self::ArityMismatch {
+                node,
+                expected,
+                actual,
+            } => write!(
+                formatter,
+                "node {node} receives {actual} ports; expected {expected}"
+            ),
+            Self::RankMismatch {
+                node,
+                port,
+                rank,
+                min,
+                max,
+            } => write!(
+                formatter,
+                "node {node} port {port} has rank {rank}; expected {min}..={max}"
+            ),
+            Self::DTypeNotAllowed { node, dtype } => {
+                write!(formatter, "node {node} does not accept dtype {dtype}")
+            }
+            Self::RoleNotAllowed { node, value, role } => write!(
+                formatter,
+                "node {node} does not accept role {role} for value {}",
+                value.0
+            ),
+            Self::SymbolicNotAllowed { node } => {
+                write!(formatter, "node {node} does not accept symbolic dimensions")
+            }
             Self::ShapeOverflow => formatter.write_str("shape element count overflows u64"),
             Self::UnresolvedSymbolicDim(dim) => {
                 write!(formatter, "symbolic dimension {} is not resolved", dim.0)

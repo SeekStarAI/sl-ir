@@ -20,19 +20,19 @@ CommandBuffer（物理）
 
 `Program` 负责表达"要算什么"，`CommandBuffer` 负责表达"在哪算、按什么顺序算、内存落在哪"。
 
-## 当前能力（M0）
+## 当前能力（M0 + M1 签名校验）
 
 - `DType` / `DTypeSet`：元素类型与集合。
 - `Dim` / `Shape` / `ShapeSpec`：符号维度、上界与具体化。
 - `Value` / `ValueRole` / `ValueRoleSet`：值语义与角色。
-- `OpCode` / `Op` / `Signature`：算子词表与端口签名。
+- `OpCode` / `Op` / `Signature`：算子词表、端口签名与节点签名校验。
 - `Program` / `Node` / `Effect` / `StateDecl`：符号程序与状态副作用。
 - `Command` / `CommandBuffer`：物理命令流。
 - `MemoryPlan` / `Slot`：静态 scratchpad 布局与不变量校验。
 - `DeviceCapabilities`：backend 能力声明。
 - `ParamBinding` / `StepBinding`：编译期与每步绑定。
 
-尚未提供：算子签名的完整校验、能力协商 pass、内存着色算法、`Program → CommandBuffer` 的具体化实现。这些属于 `sl-graph`。
+尚未提供：能力协商 pass、内存着色算法、`Program → CommandBuffer` 的具体化实现。这些属于 `sl-graph`。
 
 ## 设计约束
 

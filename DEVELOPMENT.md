@@ -51,6 +51,8 @@ any backend or any third-party crate.
 ## Invariants Enforced Today
 
 - Program inputs have role `Input`, outputs have role `Output`.
+- Every node satisfies its operator signature: port count, dtype set, role set and rank
+  range are checked against `OpCode::signature()`.
 - Every symbolic dimension used by a value is declared in `Program::sym_dims`.
 - State effects target values with role `State` and an entry in `Program::states`.
 - `CommandBuffer` contains no symbolic dimensions, including KV `max_seq`.

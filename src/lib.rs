@@ -124,6 +124,70 @@ mod tests {
     }
 
     #[test]
+    fn program_validates_operator_signatures() {
+        let mut program = Program {
+            sym_dims: Vec::new(),
+            values: vec![
+                f32_value(&[2, 4], ValueRole::Temp),
+                f32_value(&[3, 4], ValueRole::Temp),
+                f32_value(&[2, 3], ValueRole::Temp),
+            ],
+            nodes: vec![Node {
+                op: Op::MatMulNT,
+                inputs: vec![ValueId(0)],
+                outputs: vec![ValueId(2)],
+                effect: Effect::None,
+            }],
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+            states: Vec::new(),
+        };
+
+        assert_eq!(
+            program.validate().err(),
+            Some(IrError::ArityMismatch {
+                node: 0,
+                expected: 2,
+                actual: 1,
+            })
+        );
+
+        program.nodes[0].inputs = vec![ValueId(0), ValueId(1)];
+        assert_eq!(program.validate(), Ok(()));
+
+        program.values[1] = Value::new(DType::F32, Shape::default(), ValueRole::Temp);
+        assert_eq!(
+            program.validate().err(),
+            Some(IrError::RankMismatch {
+                node: 0,
+                port: 1,
+                rank: 0,
+                min: 2,
+                max: 4,
+            })
+        );
+
+        program.values[1] = Value::new(DType::U32, Shape::consts(&[3, 4]), ValueRole::Temp);
+        assert_eq!(
+            program.validate().err(),
+            Some(IrError::DTypeNotAllowed {
+                node: 0,
+                dtype: DType::U32,
+            })
+        );
+
+        program.values[1] = Value::new(DType::F32, Shape::consts(&[3, 4]), ValueRole::State);
+        assert_eq!(
+            program.validate().err(),
+            Some(IrError::RoleNotAllowed {
+                node: 0,
+                value: ValueId(1),
+                role: ValueRole::State,
+            })
+        );
+    }
+
+    #[test]
     fn memory_plan_rejects_overlapping_live_ranges() {
         let values = vec![
             f32_value(&[4], ValueRole::Temp),
