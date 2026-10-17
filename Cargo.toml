@@ -1,0 +1,15 @@
+[package]
+name = "sl-ir"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.87"
+license = "MIT"
+description = "Backend-agnostic graph IR and device command ABI for StarLight."
+repository = "https://github.com/SeekStarAI/sl-ir"
+readme = "README.md"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
